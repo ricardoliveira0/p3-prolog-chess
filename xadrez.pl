@@ -1,17 +1,31 @@
-:- initialization(start_game).
+:- initialization(start).
 
-start_game :- argument_list(As), verify_format(As).
+start :- argument_list(As), verify_format(As).
 
 is_algebrica('algebrica') :- write('formato: algebrica'), nl, !.
 is_descritiva('descritiva') :- write('formato: descritiva'), nl, !.
 is_postal('postal') :- write('formato: postal'), nl, !.
-is_mostrar('mostrar') :- print_board.
+is_mostrar('mostrar') :- write('ação: mostrar'), nl, !. % TEMP: remover e adicionar a função final em baixo, após os moves todos
+/* is_mostrar('mostrar') :- print_board. */
 is_estado('estado') :- verify_check.
 
 verify_format([F|T]) :- (is_algebrica(F); is_descritiva(F); is_postal(F)), verify_action(T).
-verify_action([A|T]) :- (is_mostrar(A); is_estado(A)), start_game(T).
+verify_action([A,J|T]) :-  open_game_file(J), (is_mostrar(A); is_estado(A)).
 
-start_game(B) :- print_board.
+open_game_file(J) :- 
+  file_exists(J),see(J), start_game,
+  format("\n[file ~w]\n\n", [J]).
+
+start_game :- get0(C), write(C), nl, check_char(C,[]).
+start_game(MoveList) :- get0(C), write(C), nl, check_char(C, MoveList).
+
+check_char(32, List) :- make_move(List, 1), start_game. % space (new move) | 1 for white
+check_char(10, List) :- make_move(List, 0), start_game. % enter (end of turn) | 0 for black
+check_char(-1, List). % EOF (game finished)
+check_char(C, List) :- append(List, [C], MoveList), start_game(MoveList).
+
+make_move(List, PieceColor) :- write(List), nl.
+
 /* command([]).
 command([A|As]) :- arg(A), command(As).
 
