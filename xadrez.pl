@@ -16,8 +16,8 @@ open_game_file(J) :-
   file_exists(J),see(J), start_game,
   format("\n[file ~w]\n\n", [J]).
 
-start_game :- get0(C), write(C), nl, check_char(C,[]).
-start_game(MoveList) :- get0(C), write(C), nl, check_char(C, MoveList).
+start_game :- get0(C), check_char(C,[]).
+start_game(MoveList) :- get0(C), check_char(C, MoveList).
 
 check_char(32, List) :- make_move(List, 1), start_game. % space (new move) | 1 for white
 check_char(10, List) :- make_move(List, 0), start_game. % enter (end of turn) | 0 for black
