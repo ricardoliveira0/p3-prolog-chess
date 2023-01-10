@@ -19,12 +19,22 @@ open_game_file(J) :-
 start_game :- get0(C), check_char(C,[]).
 start_game(MoveList) :- get0(C), check_char(C, MoveList).
 
-check_char(32, List) :- make_move(List, 1), start_game. % space (new move) | 1 for white
-check_char(10, List) :- make_move(List, 0), start_game. % enter (end of turn) | 0 for black
+check_char(32, List) :- write(List), nl, make_move_handler(List, 1), start_game. % space (new move) | 1 for white
+check_char(10, List) :- write(List), nl, make_move_handler(List, 0), start_game. % enter (end of turn) | 0 for black
 check_char(-1, List). % EOF (game finished)
 check_char(C, List) :- append(List, [C], MoveList), start_game(MoveList).
 
-make_move(List, PieceColor) :- write(List), nl.
+make_move_handler(List, PieceColor) :- 
+  (length(List, 2), make_move_two(List, PieceColor));
+  (length(List, 3), make_move_three(List, PieceColor));
+  (length(List, 4), make_move_four(List, PieceColor));
+  (length(List, 5), make_move_five).
+
+make_move_two([X,Y], PC):- 
+  X1 is X-96, Y1 is Y-48.
+make_move_three([X,Y,Z], PC):- write('3 chars move'), nl, nl.
+make_move_four([X,Y,Z,W], PC):- write('4 chars move'), nl, nl.
+/* make_move_five:- write('5 chars move'), nl, nl. */
 
 /* command([]).
 command([A|As]) :- arg(A), command(As).
