@@ -40,27 +40,16 @@ make_move_four([X,Y,Z,W], PC):- write('4 chars move'), nl, nl.
 
 find_pawn(Board, X, Y, PC, UpdatedBoard) :- 
   ( (PC = false, name(Piece, [119, 80]) ) ; (PC = true, name(Piece, [98, 80])) ),
-  write('!!! '), write(Piece), nl,
   ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ),
-  write('Y = '), write(Y1), nl,
   nth(Y1, Board, FromRow),
-  write('FromRow '), write(FromRow), nl,
   nth(Y, Board, ToRow),
-  write('ToRow '), write(ToRow), nl,
   nth(X, FromRow, Piece),
-  write('Piece '), write(Piece), nl,
   select(Piece, FromRow, NewFromRow),
-  write('NewFromRow '), write(NewFromRow), nl,
   select('es', ToRow, NewToRow),
-  write('NewToRow '), write(NewToRow), nl,
-  new_row_handler('es', NewFromRow, X, FinalFromRow), write(FinalFromRow), nl,
-  new_row_handler(Piece, NewToRow, X, FinalToRow), write(FinalToRow), nl,
-  write('Replacing... Y1='), write(Y1), nl,
+  new_row_handler('es', NewFromRow, X, FinalFromRow),
+  new_row_handler(Piece, NewToRow, X, FinalToRow),
   replace(Board, Y1, FinalFromRow, TempBoard),
-  write('TempBoard '), write(TempBoard), nl,
-  write('Replacing... Y='), write(Y), nl,
-  replace(TempBoard, Y, FinalToRow, UpdatedBoard),
-  write('Updated Board '), write(UpdatedBoard), nl.
+  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
   /* NewFromRow = [es | RestFromRow], write(NewFromRow), nl, */
   /* NewToRow = ['wP' | NewToRow], write(NewToRow), nl. */
   
