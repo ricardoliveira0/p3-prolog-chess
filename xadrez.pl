@@ -34,7 +34,9 @@ make_move_handler(List, PieceColor) :-
 make_move_two([X,Y], PC):- 
   X1 is X-96, Y1 is Y-48, write(X1), write(' '), write(Y1), nl, chess_board(Board),
   find_pawn(Board, X1, Y1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board.
-make_move_three([X,Y,Z], PC):- write('3 chars move'), nl, nl.
+make_move_three([X,Y,Z], PC):-
+  Y1 is Y-96, Z1 is Z-48, write(X), write(' '), write(Y1), write(' '), write(Z1), nl, chess_board(Board),
+  move_piece(Board, X, Y1, Z1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board.
 make_move_four([X,Y,Z,W], PC):- write('4 chars move'), nl, nl.
 /* make_move_five:- write('5 chars move'), nl, nl. */
 
@@ -53,13 +55,17 @@ find_pawn(Board, X, Y, PC, UpdatedBoard) :-
   /* NewFromRow = [es | RestFromRow], write(NewFromRow), nl, */
   /* NewToRow = ['wP' | NewToRow], write(NewToRow), nl. */
   
-new_row_handler(E, Es0, I1, Es) :-
-  maplist(any_thing, Es, [_|Es0]),
-  append(Prefix, Suffix, Es0),
-  length([_|Prefix], I1),
-  append(Prefix, [E|Suffix], Es).
+move_piece(Board, P, X, Y, PC, UpdatedBoard) :-
+  ( (PC = false, name(Piece, [119, P]) ) ; (PC = true, name(Piece, [98, P])) ),
+  write('PEÇA: '), write(Piece), nl,
+  chess_rules([119, P], X, Y, X, Y).
 
-any_thing(_, _). % aux
+new_row_handler(Piece, Row, Position, NewRow) :-
+  PrefixLength is Position - 1,
+  length(Prefix, PrefixLength),
+  append(Prefix, Suffix, Row),
+  append(Prefix, [Piece], Temp),
+  append(Temp, Suffix, NewRow).
 
 replace([_|T], 1, X, [X|T]).
 replace([H|T], I, X, [H|R]) :- I > 1, I1 is I-1, write('I1='), write(I1), nl, replace(T, I1, X, R).
@@ -98,50 +104,57 @@ print_board :-
 verify_check :- write('teste'), nl.
 
 chess_rules([piece_color, 80], X, Y, X1, Y1) :- % Pawn
-(Y1 is Y+1 ; Y1 is Y+2),
-X1 is X,
-(Y1 =:= 2 ; Y1 =:= 7), % First move (can move two squares)
-\+ occupied(X1, Y1).
+  (Y1 is Y+1 ; Y1 is Y+2),
+  X1 is X,
+  (Y1 =:= 2 ; Y1 =:= 7), % First move (can move two squares)
+  \+ occupied(X1, Y1).
+
 chess_rules([piece_color, 80], X, Y, X1, Y1) :- % Pawn
-Y1 is Y+1,
-X1 is X,
-\+ occupied(X1, Y1).
+  Y1 is Y+1,
+  X1 is X,
+  \+ occupied(X1, Y1).
+
 chess_rules([piece_color, 80], X, Y, X1, Y1) :- % Pawn
-Y1 is Y+1,
-(X1 is X+1 ; X1 is X-1),
-occupied(X1, Y1).
+  Y1 is Y+1,
+  (X1 is X+1 ; X1 is X-1),
+  occupied(X1, Y1).
 
 chess_rules([piece_color, 82], X, Y, X1, Y1) :- % Rook
-(X1 =:= X ; Y1 =:= Y),
-\+ occupied(X1, Y1).
+  write('Rook'), nl,
+  (X1 =:= X ; Y1 =:= Y),
+  \+ occupied(X1, Y1).
 
-chess_rules([peice_color, 78], X, Y, X1, Y1) :- % Knight
-(X1 is X+2 ; X1 is X-2),
-(Y1 is Y+1 ; Y1 is Y-1),
-\+ occupied(X1, Y1).
 chess_rules([piece_color, 78], X, Y, X1, Y1) :- % Knight
-(X1 is X+1 ; X1 is X-1),
-(Y1 is Y+2 ; Y1 is Y-2),
-\+ occupied(X1, Y1).
+  write('Knight'), nl,
+  (X1 is X+2 ; X1 is X-2),
+  (Y1 is Y+1 ; Y1 is Y-1),
+  \+ occupied(X1, Y1).
+
+chess_rules([piece_color, 78], X, Y, X1, Y1) :- % Knight
+  (X1 is X+1 ; X1 is X-1),
+  (Y1 is Y+2 ; Y1 is Y-2),
+  \+ occupied(X1, Y1).
 
 chess_rules([piece_color, 66], X, Y, X1, Y1) :- % Bishop
-X1 is X + Y1 - Y,
-Y1 is Y + X1 - X,
-\+ occupied(X1, Y1).
+  write('Bishop'), nl,
+  X1 is X + Y1 - Y,
+  Y1 is Y + X1 - X,
+  \+ occupied(X1, Y1).
 
 chess_rules([piece_color, 81], X, Y, X1, Y1) :- % Queen
-X1 is X + Y1 - Y,
-Y1 is Y + X1 - X,
-\+ occupied(X1, Y1).
+  X1 is X + Y1 - Y,
+  Y1 is Y + X1 - X,
+  \+ occupied(X1, Y1).
 
 chess_rules([piece_color, 81], X, Y, X1, Y1) :- % Queen
-(X1 =:= X ; Y1 =:= Y),
-\+ occupied(X1, Y1).
+  (X1 =:= X ; Y1 =:= Y),
+  \+ occupied(X1, Y1).
 
 chess_rules([piece_color, 75], X, Y, X1, Y1) :- % King
-(X1 is X+1 ; X1 is X-1 ; X1 is X),
-(Y1 is Y+1 ; Y1 is Y-1 ; Y1 is Y),
-\+ occupied(X1, Y1).
+  write('King'), nl,
+  (X1 is X+1 ; X1 is X-1 ; X1 is X),
+  (Y1 is Y+1 ; Y1 is Y-1 ; Y1 is Y),
+  \+ occupied(X1, Y1).
 
 occupied(X, Y).
 /* occupied(X, Y) :- occupied(board, X, Y). */
