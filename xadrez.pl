@@ -16,42 +16,55 @@ open_game_file(J) :-
   file_exists(J),see(J), start_game,
   format("\n[file ~w]\n\n", [J]).
 
-start_game :- get0(C), check_char(C,[]).
-start_game(MoveList) :- get0(C), check_char(C, MoveList).
+start_game :- write('esvaziou a list do current_move'), nl, get0(C), write('[char '), write(C), write(']'), check_char(C,[]).
+start_game(MoveList) :- get0(C), write('[char '), write(C), write(']'), write('[MoveList]: '), write(MoveList), nl, check_char(C, MoveList).
 
-check_char(32, List) :- write(List), nl, make_move_handler(List, 1), start_game. % space (new move) | 1 for white
-check_char(10, List) :- write(List), nl, make_move_handler(List, 0), start_game. % enter (end of turn) | 0 for black
+check_char(32, List) :- write(List), nl, make_move_handler(List, 1), write('will start_game after space'), nl, start_game, !. % space (new move) | 1 for white
+check_char(10, List) :- write(List), nl, make_move_handler(List, 0), write('will start_game afer enter'), nl, start_game, !. % enter (end of turn) | 0 for black
 check_char(-1, List). % EOF (game finished)
-check_char(C, List) :- append(List, [C], MoveList), start_game(MoveList).
+check_char(C, List) :- append(List, [C], MoveList), start_game(MoveList), !.
 
 make_move_handler(List, PieceColor) :- 
   (length(List, 2), make_move_two(List, PieceColor));
   (length(List, 3), make_move_three(List, PieceColor));
-  (length(List, 4), make_move_four(List, PieceColor));
-  (length(List, 5), make_move_five).
+  (length(List, 4), make_move_four(List, PieceColor)).
+  /* (length(List, 5), make_move_five). */
 
 make_move_two([X,Y], PC):- 
-  X1 is X-96, Y1 is Y-48.
+  X1 is X-96, Y1 is Y-48, write(X1), write(' '), write(Y1), nl, chess_board(Board),
+  find_pawn(Board, X1, Y1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board.
 make_move_three([X,Y,Z], PC):- write('3 chars move'), nl, nl.
 make_move_four([X,Y,Z,W], PC):- write('4 chars move'), nl, nl.
 /* make_move_five:- write('5 chars move'), nl, nl. */
 
-/* command([]).
-command([A|As]) :- arg(A), command(As).
+find_pawn(Board, X, Y, PC, UpdatedBoard) :- 
+  ( (PC = 1, name(Piece, [119, 80]) ) ; (PC = 0, name(Piece, [98, 80])) ),
+  Y1 is Y - 2,
+  nth(Y1, Board, FromRow),
+  nth(Y, Board, ToRow),
+  nth(X, FromRow, Piece),
+  select(Piece, FromRow, NewFromRow),
+  select('es', ToRow, NewToRow),
+  new_row_handler('es', NewFromRow, X, FinalFromRow), write(FinalFromRow), nl,
+  new_row_handler(Piece, NewToRow, X, FinalToRow), write(FinalToRow), nl,
+  replace(Board, Y1, FinalFromRow, TempBoard),
+  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
+  /* NewFromRow = [es | RestFromRow], write(NewFromRow), nl, */
+  /* NewToRow = ['wP' | NewToRow], write(NewToRow), nl. */
+  
+new_row_handler(E, Es0, I1, Es) :-
+  maplist(any_thing, Es, [_|Es0]),
+  append(Prefix, Suffix, Es0),
+  length([_|Prefix], I1),
+  append(Prefix, [E|Suffix], Es).
 
-arg('-') :- !, format("\n[standard input]\n\n", []).
+any_thing(_, _). % aux
 
-arg(F) :- is_algebrica(F); is_descritiva(F); is_postal(F).
+replace([_|T], 0, X, [X|T]).
+replace([H|T], I, X, [H|R]) :- I > 0, I1 is I-1, replace(T, I1, X, R).
 
-arg(B) :- is_mostrar(B); is_estado(B), !.
-
-arg(F) :- file_exists(F), see(F), !,
-		format("\n[file ~w]\n\n", [F]).
-
-arg(U) :- format("[nao existe: ~w]\n", [U]), !, halt. */
-
-% define the chess board with pieces at start positions
-board([
+:- dynamic(chess_board/1).
+chess_board([
         ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR'],
         ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
         ['es', 'es', 'es', 'es', 'es', 'es', 'es', 'es'],
@@ -62,9 +75,8 @@ board([
         ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR']
       ]).
 
-% print the board to the console
 print_board :-
-        board(B),
+        chess_board(B),
         print_board(B).
       
       print_board([]) :- nl.
