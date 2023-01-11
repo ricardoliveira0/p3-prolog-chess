@@ -16,15 +16,16 @@ open_game_file(J) :-
   file_exists(J),see(J), start_game,
   format("\n[file ~w]\n\n", [J]).
 
-start_game :- write('esvaziou a list do current_move'), nl, get0(C), write('[char '), write(C), write(']'), check_char(C,[]).
-start_game(MoveList) :- get0(C), write('[char '), write(C), write(']'), write('[MoveList]: '), write(MoveList), nl, check_char(C, MoveList).
+start_game :- write('esvaziou [current_move]'), nl, get0(C), check_char(C,[]).
+start_game(MoveList) :- get0(C), check_char(C, MoveList).
 
-check_char(32, List) :- write(List), nl, make_move_handler(List, 1), write('will start_game after space'), nl, start_game, !. % space (new move) | 1 for white
-check_char(10, List) :- write(List), nl, make_move_handler(List, 0), write('will start_game afer enter'), nl, start_game, !. % enter (end of turn) | 0 for black
+check_char(32, List) :- write('SPACE'), write(List), nl, make_move_handler(List, false), start_game. % space (new move) | 1 for white
+check_char(10, List) :- write('ENTER'), write(List), nl, make_move_handler(List, true), start_game. % enter (end of turn) | 0 for black
 check_char(-1, List). % EOF (game finished)
 check_char(C, List) :- append(List, [C], MoveList), start_game(MoveList), !.
 
 make_move_handler(List, PieceColor) :- 
+  write('-> make_move_handler args: '), write(List), write(' '), write(PieceColor), nl,
   (length(List, 2), make_move_two(List, PieceColor));
   (length(List, 3), make_move_three(List, PieceColor));
   (length(List, 4), make_move_four(List, PieceColor)).
@@ -38,17 +39,28 @@ make_move_four([X,Y,Z,W], PC):- write('4 chars move'), nl, nl.
 /* make_move_five:- write('5 chars move'), nl, nl. */
 
 find_pawn(Board, X, Y, PC, UpdatedBoard) :- 
-  ( (PC = 1, name(Piece, [119, 80]) ) ; (PC = 0, name(Piece, [98, 80])) ),
-  Y1 is Y - 2,
+  ( (PC = false, name(Piece, [119, 80]) ) ; (PC = true, name(Piece, [98, 80])) ),
+  write('!!! '), write(Piece), nl,
+  ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ),
+  write('Y = '), write(Y1), nl,
   nth(Y1, Board, FromRow),
+  write('FromRow '), write(FromRow), nl,
   nth(Y, Board, ToRow),
+  write('ToRow '), write(ToRow), nl,
   nth(X, FromRow, Piece),
+  write('Piece '), write(Piece), nl,
   select(Piece, FromRow, NewFromRow),
+  write('NewFromRow '), write(NewFromRow), nl,
   select('es', ToRow, NewToRow),
+  write('NewToRow '), write(NewToRow), nl,
   new_row_handler('es', NewFromRow, X, FinalFromRow), write(FinalFromRow), nl,
   new_row_handler(Piece, NewToRow, X, FinalToRow), write(FinalToRow), nl,
+  write('Replacing... Y1='), write(Y1), nl,
   replace(Board, Y1, FinalFromRow, TempBoard),
-  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
+  write('TempBoard '), write(TempBoard), nl,
+  write('Replacing... Y='), write(Y), nl,
+  replace(TempBoard, Y, FinalToRow, UpdatedBoard),
+  write('Updated Board '), write(UpdatedBoard), nl.
   /* NewFromRow = [es | RestFromRow], write(NewFromRow), nl, */
   /* NewToRow = ['wP' | NewToRow], write(NewToRow), nl. */
   
@@ -60,8 +72,8 @@ new_row_handler(E, Es0, I1, Es) :-
 
 any_thing(_, _). % aux
 
-replace([_|T], 0, X, [X|T]).
-replace([H|T], I, X, [H|R]) :- I > 0, I1 is I-1, replace(T, I1, X, R).
+replace([_|T], 1, X, [X|T]).
+replace([H|T], I, X, [H|R]) :- I > 1, I1 is I-1, write('I1='), write(I1), nl, replace(T, I1, X, R).
 
 :- dynamic(chess_board/1).
 chess_board([
