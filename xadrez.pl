@@ -46,29 +46,25 @@ find_pawn(Board, X, Y, PC, UpdatedBoard) :-
   nth(Y1, Board, FromRow),
   nth(Y, Board, ToRow),
   nth(X, FromRow, Piece),
-  select(Piece, FromRow, NewFromRow),
-  select('es', ToRow, NewToRow),
-  new_row_handler('es', NewFromRow, X, FinalFromRow),
-  new_row_handler(Piece, NewToRow, X, FinalToRow),
+  new_row_handler('es', FromRow, X, FinalFromRow),
+  new_row_handler(Piece, ToRow, X, FinalToRow),
   replace(Board, Y1, FinalFromRow, TempBoard),
   replace(TempBoard, Y, FinalToRow, UpdatedBoard).
-  /* NewFromRow = [es | RestFromRow], write(NewFromRow), nl, */
-  /* NewToRow = ['wP' | NewToRow], write(NewToRow), nl. */
   
 move_piece(Board, P, X, Y, PC, UpdatedBoard) :-
   ( (PC = false, name(Piece, [119, P]) ) ; (PC = true, name(Piece, [98, P])) ),
   write('PEÇA: '), write(Piece), nl,
-  chess_rules([119, P], X, Y, X, Y).
+  chess_rules(Piece, X, Y, X, Y).
 
 new_row_handler(Piece, Row, Position, NewRow) :-
   PrefixLength is Position - 1,
   length(Prefix, PrefixLength),
-  append(Prefix, Suffix, Row),
+  append(Prefix, [KP|Suffix], Row),
   append(Prefix, [Piece], Temp),
   append(Temp, Suffix, NewRow).
 
 replace([_|T], 1, X, [X|T]).
-replace([H|T], I, X, [H|R]) :- I > 1, I1 is I-1, write('I1='), write(I1), nl, replace(T, I1, X, R).
+replace([H|T], I, X, [H|R]) :- I > 1, I1 is I-1, replace(T, I1, X, R).
 
 :- dynamic(chess_board/1).
 chess_board([
