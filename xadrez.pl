@@ -139,9 +139,36 @@ chess_rules([C, 78], X, Y, FromX, FromY, Board) :- % Knight
   FromX is X1, FromY is Y1,
   write(FromX), write(' '), write(FromY), nl.
 
+chess_rules([C, 66], X, Y, FromX, FromY, Board) :- % Bishop
+  write('Bishop'), nl,
+  ( ( X1 is X + 1, Y1 is Y + 1 ); ( X1 is X + 1, Y1 is Y - 1 ); ( X1 is X - 1, Y1 is Y + 1 ); ( X1 is X - 1, Y1 is Y - 1 );
+  ( X1 is X + 2, Y1 is Y + 2 ); ( X1 is X + 2, Y1 is Y - 2 ); ( X1 is X - 2, Y1 is Y + 2 ); ( X1 is X - 2, Y1 is Y - 2 );
+  ( X1 is X + 3, Y1 is Y + 3 ); ( X1 is X + 3, Y1 is Y - 3 ); ( X1 is X - 3, Y1 is Y + 3 ); ( X1 is X - 3, Y1 is Y - 3 );
+  ( X1 is X + 4, Y1 is Y + 4 ); ( X1 is X + 4, Y1 is Y - 4 ); ( X1 is X - 4, Y1 is Y + 4 ); ( X1 is X - 4, Y1 is Y - 4 );
+  ( X1 is X + 5, Y1 is Y + 5 ); ( X1 is X + 5, Y1 is Y - 5 ); ( X1 is X - 5, Y1 is Y + 5 ); ( X1 is X - 5, Y1 is Y - 5 );
+  ( X1 is X + 6, Y1 is Y + 6 ); ( X1 is X + 6, Y1 is Y - 6 ); ( X1 is X - 6, Y1 is Y + 6 ); ( X1 is X - 6, Y1 is Y - 6 );
+  ( X1 is X + 7, Y1 is Y + 7 ); ( X1 is X + 7, Y1 is Y - 7 ); ( X1 is X - 7, Y1 is Y + 7 ); ( X1 is X - 7, Y1 is Y - 7 ) ),
+  is_inside_board(X1, Y1),
+  find_piece(X1, Y1, Board, [C, 66]),
+  FromX is X1, FromY is Y1,
+  write(FromX), write(' '), write(FromY), nl.
+
+chess_rules([C, 82], X, Y, FromX, FromY, Board) :- % Rook
+  write('Rook'), nl,
+  between(1, 8, X1),
+  between(1, 8, Y1),
+  (X1 =:= X ; Y1 =:= Y),
+  write(X1), write(Y1), nl,
+  is_inside_board(X1, Y1),
+  find_piece(X1, Y1, Board, [C, 82]),
+  FromX is X1, FromY is Y1,
+  write(FromX), write(' '), write(FromY), nl.
+
 find_piece(X, Y, Board, Piece) :-
+  write('teste'), nl,
   nth(Y, Board, Row),
   nth(X, Row, CurrentPiece),
+  write('X: '), write(X), write(' | Y: '), write(Y), write(' | CP: '), write(CurrentPiece), nl,
   name(CurrentPiece, Piece), write(CurrentPiece), nl.
 
 is_inside_board(X, Y) :- 
