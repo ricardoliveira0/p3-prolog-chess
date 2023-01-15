@@ -164,6 +164,17 @@ chess_rules([C, 82], X, Y, FromX, FromY, Board) :- % Rook
   FromX is X1, FromY is Y1,
   write(FromX), write(' '), write(FromY), nl.
 
+chess_rules([C, 75], X, Y, FromX, FromY, Board) :- % King
+  write('King'), nl,
+  between(0, 1, Xaux),
+  between(0, 1, Yaux),
+  (X1 is X + Xaux, Y1 is Y + Yaux),
+  write(X1), write(Y1), nl,
+  is_inside_board(X1, Y1),
+  find_piece(X1, Y1, Board, [C, 75]),
+  FromX is X1, FromY is Y1,
+  write(FromX), write(' '), write(FromY), nl.
+
 find_piece(X, Y, Board, Piece) :-
   write('teste'), nl,
   nth(Y, Board, Row),
