@@ -118,9 +118,6 @@ print_board :-
 
 verify_check :- write('teste'), nl.
 
-chess_rules([C, 75], X, Y, X1, Y1, Board) :-
-  write('Rei'), nl.
-
 chess_rules([C, 78], X, Y, FromX, FromY, Board) :- % Knight
   write('Knight'), nl,
   ( (X1 is X + 2) ; (X1 is X - 2) ),
@@ -166,8 +163,8 @@ chess_rules([C, 82], X, Y, FromX, FromY, Board) :- % Rook
 
 chess_rules([C, 75], X, Y, FromX, FromY, Board) :- % King
   write('King'), nl,
-  between(0, 1, Xaux),
-  between(0, 1, Yaux),
+  between(-1, 1, Xaux),
+  between(-1, 1, Yaux),
   (X1 is X + Xaux, Y1 is Y + Yaux),
   write(X1), write(Y1), nl,
   is_inside_board(X1, Y1),
