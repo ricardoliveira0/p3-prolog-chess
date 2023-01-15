@@ -50,11 +50,30 @@ find_pawn(Board, X, Y, PC, UpdatedBoard) :-
   new_row_handler(Piece, ToRow, X, FinalToRow),
   replace(Board, Y1, FinalFromRow, TempBoard),
   replace(TempBoard, Y, FinalToRow, UpdatedBoard).
+
+do_the_move(Board, X, Y, PC, UpdatedBoard) :- 
+  ( (PC = false, name(Piece, [119, 80]) ) ; (PC = true, name(Piece, [98, 80])) ),
+  ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ),
+  nth(Y1, Board, FromRow),
+  nth(Y, Board, ToRow),
+  nth(X, FromRow, Piece),
+  new_row_handler('es', FromRow, X, FinalFromRow),
+  new_row_handler(Piece, ToRow, X, FinalToRow),
+  replace(Board, Y1, FinalFromRow, TempBoard),
+  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
   
 move_piece(Board, P, X, Y, PC, UpdatedBoard) :-
   ( (PC = false, name(Piece, [119, P]) ) ; (PC = true, name(Piece, [98, P])) ),
   write('PEÇA: '), write(Piece), nl,
-  chess_rules(Piece, X, Y, X, Y).
+  name(Piece, PieceList),
+  chess_rules(PieceList, X, Y, FromX, FromY, Board),
+  nth(FromY, Board, FromRow),
+  nth(Y, Board, ToRow),
+  nth(FromX, FromRow, Piece),
+  new_row_handler('es', FromRow, FromX, FinalFromRow),
+  new_row_handler(Piece, ToRow, X, FinalToRow),
+  replace(Board, FromY, FinalFromRow, TempBoard),
+  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
 
 new_row_handler(Piece, Row, Position, NewRow) :-
   PrefixLength is Position - 1,
@@ -99,59 +118,32 @@ print_board :-
 
 verify_check :- write('teste'), nl.
 
-chess_rules([piece_color, 80], X, Y, X1, Y1) :- % Pawn
-  (Y1 is Y+1 ; Y1 is Y+2),
-  X1 is X,
-  (Y1 =:= 2 ; Y1 =:= 7), % First move (can move two squares)
-  \+ occupied(X1, Y1).
+chess_rules([C, 75], X, Y, X1, Y1, Board) :-
+  write('Rei'), nl.
 
-chess_rules([piece_color, 80], X, Y, X1, Y1) :- % Pawn
-  Y1 is Y+1,
-  X1 is X,
-  \+ occupied(X1, Y1).
-
-chess_rules([piece_color, 80], X, Y, X1, Y1) :- % Pawn
-  Y1 is Y+1,
-  (X1 is X+1 ; X1 is X-1),
-  occupied(X1, Y1).
-
-chess_rules([piece_color, 82], X, Y, X1, Y1) :- % Rook
-  write('Rook'), nl,
-  (X1 =:= X ; Y1 =:= Y),
-  \+ occupied(X1, Y1).
-
-chess_rules([piece_color, 78], X, Y, X1, Y1) :- % Knight
+chess_rules([C, 78], X, Y, FromX, FromY, Board) :- % Knight
   write('Knight'), nl,
-  (X1 is X+2 ; X1 is X-2),
-  (Y1 is Y+1 ; Y1 is Y-1),
-  \+ occupied(X1, Y1).
+  ( (X1 is X + 2) ; (X1 is X - 2) ),
+  ( (Y1 is Y + 1) ; (Y1 is Y - 1) ),
+  is_inside_board(X1, Y1),
+  find_piece(X1, Y1, Board, [C, 78]),
+  FromX is X1, FromY is Y1,
+  write(FromX), write(' '), write(FromY), nl.
 
-chess_rules([piece_color, 78], X, Y, X1, Y1) :- % Knight
-  (X1 is X+1 ; X1 is X-1),
-  (Y1 is Y+2 ; Y1 is Y-2),
-  \+ occupied(X1, Y1).
+chess_rules([C, 78], X, Y, FromX, FromY, Board) :- % Knight
+  write('Knight 2'), nl,
+  ( (X1 is X + 1) ; (X1 is X - 1) ),
+  ( (Y1 is Y + 2) ; (Y1 is Y - 2) ),
+  is_inside_board(X1, Y1),
+  find_piece(X1, Y1, Board, [C, 78]),
+  FromX is X1, FromY is Y1,
+  write(FromX), write(' '), write(FromY), nl.
 
-chess_rules([piece_color, 66], X, Y, X1, Y1) :- % Bishop
-  write('Bishop'), nl,
-  X1 is X + Y1 - Y,
-  Y1 is Y + X1 - X,
-  \+ occupied(X1, Y1).
+find_piece(X, Y, Board, Piece) :-
+  nth(Y, Board, Row),
+  nth(X, Row, CurrentPiece),
+  name(CurrentPiece, Piece), write(CurrentPiece), nl.
 
-chess_rules([piece_color, 81], X, Y, X1, Y1) :- % Queen
-  X1 is X + Y1 - Y,
-  Y1 is Y + X1 - X,
-  \+ occupied(X1, Y1).
-
-chess_rules([piece_color, 81], X, Y, X1, Y1) :- % Queen
-  (X1 =:= X ; Y1 =:= Y),
-  \+ occupied(X1, Y1).
-
-chess_rules([piece_color, 75], X, Y, X1, Y1) :- % King
-  write('King'), nl,
-  (X1 is X+1 ; X1 is X-1 ; X1 is X),
-  (Y1 is Y+1 ; Y1 is Y-1 ; Y1 is Y),
-  \+ occupied(X1, Y1).
-
-occupied(X, Y).
-/* occupied(X, Y) :- occupied(board, X, Y). */
-/* occupied(B, X, Y) :- . */
+is_inside_board(X, Y) :- 
+  Min is 1, Max is 8,
+  (X >= Min, X =< Max), (Y >= Min, Y =< Max).
