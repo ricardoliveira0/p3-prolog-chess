@@ -70,17 +70,6 @@ find_pawn(Board, X, Y, PC, UpdatedBoard) :-
   new_row_handler(Piece, ToRow, X, FinalToRow),
   replace(Board, FromY, FinalFromRow, TempBoard),
   replace(TempBoard, Y, FinalToRow, UpdatedBoard).
-
-/* do_the_move(Board, X, Y, PC, UpdatedBoard) :- 
-  ( (PC = false, name(Piece, [119, 80]) ) ; (PC = true, name(Piece, [98, 80])) ),
-  ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ),
-  nth(Y1, Board, FromRow),
-  nth(Y, Board, ToRow),
-  nth(X, FromRow, Piece),
-  new_row_handler('es', FromRow, X, FinalFromRow),
-  new_row_handler(Piece, ToRow, X, FinalToRow),
-  replace(Board, Y1, FinalFromRow, TempBoard),
-  replace(TempBoard, Y, FinalToRow, UpdatedBoard). */
   
 move_piece(Board, P, X, Y, PC, UpdatedBoard) :-
   write('P: '), write(P), write('| X: '), write(X), write('| Y: '), write(Y), write('| PC: '), write(PC), nl,
