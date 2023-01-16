@@ -13,7 +13,7 @@ verify_format([F|T]) :- (is_algebrica(F); is_descritiva(F); is_postal(F)), verif
 verify_action([A,J|T]) :-  open_game_file(J), (is_mostrar(A); is_estado(A)). % Verify 2nd argument (action)
 
 open_game_file(J) :- % Vetify Tail (last argument) from argument_list (file to open)
-  file_exists(J),see(J), start_game,
+  file_exists(J), see(J), start_game,
   format("\n[file ~w]\n\n", [J]).
 
 % Read char by char. If there is passed any [MoveList] continue to append on it. Otherwise clear the current [MoveList] (new movement found) 
@@ -31,34 +31,47 @@ make_move_handler(List, PieceColor) :- % Predicate that handles the movement len
   (length(List, 4), make_move_four(List, PieceColor)).
   /* (length(List, 5), make_move_five). */
 
+% make_move_N - predicates that handle the different types of moves, "translating" the ASCII move to coordinates
 make_move_two([X,Y], PC):- 
-  X1 is X-96, Y1 is Y-48, chess_board(Board),
+  X1 is X - 96, Y1 is Y - 48, chess_board(Board),
   find_pawn(Board, X1, Y1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board.
 make_move_three([X,Y,Z], PC):-
   Y1 is Y-96, Z1 is Z-48, chess_board(Board),
   move_piece(Board, X, Y1, Z1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board.
 make_move_four([X,Y,Z,W], PC):-
-  chess_board(Board),
-  ( % The second char is 'x' so it is a take move, act like a normal move
-    Y = 120, Z1 is Z-96, W1 is W-48,
+  ( % The second char is 'x' (ASCII 120) so it is a take move, act like a normal move
+    chess_board(Board),
+    Y = 120, 
+    Z1 is Z - 96, W1 is W - 48,
     move_piece(Board, X, Z1, W1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board
   ); 
+  ( % The second char is between 'a' (ASCII 97) and 'h' (ASCII 104) so it is a move where two pieces can move to that position
+    chess_board(Board),
+    (Y >= 97, Y =< 104, W =\= 43 ), write('Move from specific column'), nl
+  );
   (
-    write('Teste'), nl
+    chess_board(Board),
+    (Y >= 97, Y =< 104, W =:= 43 ),
+    write('normal move and check (+)'), nl,
+    Y1 is Y - 96, Z1 is Z - 48, 
+    write('Piece: '), write(X), write('| X: '), write(Y1), write('| Y: '), write(Z1), nl,
+    move_piece(Board, X, Y1, Z1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board
   ).
 
 find_pawn(Board, X, Y, PC, UpdatedBoard) :- 
   ( (PC = false, name(Piece, [119, 80]) ) ; (PC = true, name(Piece, [98, 80])) ),
-  ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ),
-  nth(Y1, Board, FromRow),
+  /* ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ), */
+  name(Piece, PieceList),
+  chess_rules(PieceList, X, Y, FromX, FromY, Board),
+  nth(FromY, Board, FromRow),
   nth(Y, Board, ToRow),
-  nth(X, FromRow, Piece),
-  new_row_handler('es', FromRow, X, FinalFromRow),
+  nth(FromX, FromRow, Piece),
+  new_row_handler('es', FromRow, FromX, FinalFromRow),
   new_row_handler(Piece, ToRow, X, FinalToRow),
-  replace(Board, Y1, FinalFromRow, TempBoard),
+  replace(Board, FromY, FinalFromRow, TempBoard),
   replace(TempBoard, Y, FinalToRow, UpdatedBoard).
 
-do_the_move(Board, X, Y, PC, UpdatedBoard) :- 
+/* do_the_move(Board, X, Y, PC, UpdatedBoard) :- 
   ( (PC = false, name(Piece, [119, 80]) ) ; (PC = true, name(Piece, [98, 80])) ),
   ( (PC = false, Y1 is Y - 2) ; (PC = true, Y1 is Y + 2) ),
   nth(Y1, Board, FromRow),
@@ -67,9 +80,10 @@ do_the_move(Board, X, Y, PC, UpdatedBoard) :-
   new_row_handler('es', FromRow, X, FinalFromRow),
   new_row_handler(Piece, ToRow, X, FinalToRow),
   replace(Board, Y1, FinalFromRow, TempBoard),
-  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
+  replace(TempBoard, Y, FinalToRow, UpdatedBoard). */
   
 move_piece(Board, P, X, Y, PC, UpdatedBoard) :-
+  write('P: '), write(P), write('| X: '), write(X), write('| Y: '), write(Y), write('| PC: '), write(PC), nl,
   ( (PC = false, name(Piece, [119, P]) ) ; (PC = true, name(Piece, [98, P])) ),
   name(Piece, PieceList),
   chess_rules(PieceList, X, Y, FromX, FromY, Board),
@@ -123,6 +137,37 @@ print_board :-
         print_row(Rest, Separator).
 
 verify_check :- write('teste'), nl.
+
+chess_rules([C, 80], X, Y, FromX, FromY, Board) :- % Pawn
+  ( 
+    C = 119,
+    write(C), nl,
+    (
+      (Y1 is Y - 1),
+      is_inside_board(X, Y1),
+      find_piece(X, Y1, Board, [C, 80])
+    );
+    (
+      (Y1 is Y - 1),
+      is_inside_board(X, Y1),
+      find_piece(X, Y1, Board, [C, 80])
+    )
+  );
+  (
+    C = 98,
+    write(C), nl,
+    (
+      (Y1 is Y + 1),
+      is_inside_board(X, Y1),
+      find_piece(X, Y1, Board, [C, 80])
+    );
+    (
+      (Y1 is Y + 2),
+      is_inside_board(X, Y1),
+      find_piece(X, Y1, Board, [C, 80])
+    )
+  ),
+  FromX is X, FromY is Y1.
 
 chess_rules([C, 78], X, Y, FromX, FromY, Board) :- % Knight
   ( (X1 is X + 2) ; (X1 is X - 2) ),
@@ -179,7 +224,7 @@ chess_rules([C, 81], X, Y, FromX, FromY, Board) :- % Queen
   is_inside_board(X1, Y1),
   find_piece(X1, Y1, Board, [C, 81])
 );
-( % Rook like move
+( % Rook like move (Rows or Columns)
   between(1, 8, X1),
   between(1, 8, Y1),
   (X1 =:= X ; Y1 =:= Y),
@@ -189,9 +234,10 @@ chess_rules([C, 81], X, Y, FromX, FromY, Board) :- % Queen
 FromX is X1, FromY is Y1.
 
 find_piece(X, Y, Board, Piece) :-
-  write('teste'), nl,
+  /* write(X), write(' '), write(Y), write(' '), write(Piece), nl, */
   nth(Y, Board, Row),
   nth(X, Row, CurrentPiece),
+  /* write(CurrentPiece), nl, */
   name(CurrentPiece, Piece).
 
 is_inside_board(X, Y) :- % Verify if Piece is inside the game board
