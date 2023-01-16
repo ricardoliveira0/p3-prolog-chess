@@ -9,7 +9,7 @@ is_mostrar('mostrar') :- write('ação: mostrar'), nl, start_game, print_board. 
 is_estado('estado') :- write('ação: estado'), nl, start_game, verify_check. % Verify if King is in check at this Board instance
 
 verify_format([F|T]) :- (is_algebrica(F); is_descritiva(F); is_postal(F)), verify_action(T). % Verify 1st argument (format)
-verify_action([A,J|T]) :-  open_game_file(J), (is_mostrar(A); is_estado(A)). % Verify 2nd argument (action)
+verify_action([A,J|T]) :- open_game_file(J), (is_mostrar(A); is_estado(A)). % Verify 2nd argument (action)
 
 open_game_file(J) :- % Verify Tail (last argument) from argument_list (file to open)
   file_exists(J), see(J),
@@ -32,29 +32,30 @@ make_move_handler(List, PieceColor) :- % Predicate that handles the movement len
 % make_move_N - predicates that handle the different types of moves, "translating" the ASCII move to coordinates
 make_move_two([X,Y], PC) :- 
   X1 is X - 96, Y1 is Y - 48, chess_board(Board),
-  find_pawn(Board, X1, Y1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)) , print_board.
+  find_pawn(Board, X1, Y1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)). %, print_board.
 make_move_three([X,Y,Z], PC) :- 
   (( chess_board(Board), X = 79, Y = 45, Z = 79, move_piece(Board, X, Y, Z, PC, UpdatedBoard) ); % It's Castle
   ( chess_board(Board), Y1 is Y-96, Z1 is Z-48, move_piece(Board, X, Y1, Z1, PC, UpdatedBoard))), % Normal move
-  retract(chess_board(_)), assertz(chess_board(UpdatedBoard)) , print_board.
+  retract(chess_board(_)), assertz(chess_board(UpdatedBoard)). %, print_board.
 make_move_four([X,Y,Z,W], PC):-
   ( % The second char is 'x' (ASCII 120) so it is a take move, act like a normal move
     chess_board(Board),
     Y = 120, 
     Z1 is Z - 96, W1 is W - 48,
-    move_piece(Board, X, Z1, W1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board
+    move_piece(Board, X, Z1, W1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)) %, print_board
   ); 
   ( % The second char is between 'a' (ASCII 97) and 'h' (ASCII 104) so it is a move where two pieces can move to that position
     chess_board(Board),
     (Y >= 97, Y =< 104, W =\= 43 ),
-    Y1 is Y - 96, Z1 is Z - 96, W1 is W - 48,
-    move_piece(Board, X, Y1, Z1, W1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard))
+    Y1 is Y - 96, Z1 is Z - 96, W1 is W - 48
+    % TO DO
+    /* move_piece(Board, X, Y1, Z1, W1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)) */
   );
-  (
+  ( % Normal move but there is a check
     chess_board(Board),
     (Y >= 97, Y =< 104, W =:= 43 ),
     Y1 is Y - 96, Z1 is Z - 48, 
-    move_piece(Board, X, Y1, Z1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)), print_board
+    move_piece(Board, X, Y1, Z1, PC, UpdatedBoard), retract(chess_board(_)), assertz(chess_board(UpdatedBoard)) %, print_board
   ).
 
 find_pawn(Board, X, Y, PC, UpdatedBoard) :- 
@@ -81,18 +82,6 @@ move_piece(Board, 79, 45, 79, PC, UpdatedBoard) :- % O-O (Castle)
   new_row_handler('es', TempRow2, 8, TempRow3),
   new_row_handler(Piece2, TempRow3, 6, FinalFromRow),
   replace(Board, Y, FinalFromRow, UpdatedBoard).
-
-move_piece(Board, P, X, Y, PC, UpdatedBoard) :- % Move from specific column
-  ( (PC = false, name(Piece, [119, P]) ) ; (PC = true, name(Piece, [98, P])) ),
-  name(Piece, PieceList),
-  chess_rules(PieceList, X, Y, FromX, FromY, Board),
-  nth(FromY, Board, FromRow),
-  nth(Y, Board, ToRow),
-  nth(FromX, FromRow, Piece),
-  new_row_handler('es', FromRow, FromX, FinalFromRow),
-  new_row_handler(Piece, ToRow, X, FinalToRow),
-  replace(Board, FromY, FinalFromRow, TempBoard),
-  replace(TempBoard, Y, FinalToRow, UpdatedBoard).
 
 move_piece(Board, P, X, Y, PC, UpdatedBoard) :- % Normal Move
   ( (PC = false, name(Piece, [119, P]) ) ; (PC = true, name(Piece, [98, P])) ),
@@ -129,23 +118,23 @@ chess_board([
       ]).
 
 print_board :-
-        chess_board(B),
-        print_board(B).
+  chess_board(B),
+  print_board(B).
       
-      print_board([]) :- nl.
-      print_board([Row|Rest]) :-
-        print_row(Row),
-        print_board(Rest).
+print_board([]) :- nl.
+
+print_board([Row|Rest]) :-
+  print_row(Row),
+  print_board(Rest).
       
-      print_row(Row) :-
-        /* write('|'), */
-        print_row(Row, '|'),
-        nl.
+print_row(Row) :-
+  print_row(Row, '|'), nl.
       
-      print_row([], _) :- !.
-      print_row([Piece|Rest], Separator) :-
-        write(Separator), write(Piece),
-        print_row(Rest, Separator).
+print_row([], _) :- !.
+
+print_row([Piece|Rest], Separator) :-
+  write(Separator), write(Piece),
+  print_row(Rest, Separator).
 
 verify_check :- write('Verifying check'), nl.
 
